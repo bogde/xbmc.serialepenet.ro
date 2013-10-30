@@ -22,7 +22,7 @@ def MAINMENU():
     addDir("Seriale", "/seriale", 0, "")
     if __settings__.getSetting("last_link"):
         addDir(__settings__.getSetting("last_title"), __settings__.getSetting("last_link"), 2, "")
-    #addDir("Cautare", "/cautare", 0, "")
+    addDir("Cautare", "/cautare", 0, "")
     #addDir("Top", "/top", 0, "")
     addLink('Activare', "/activare", "", "", "activare", "", False)
     
@@ -37,7 +37,44 @@ def ACTIVATE():
     __code__ = code
     
     xbmcplugin.endOfDirectory(int(sys.argv[1]), cacheToDisc = False)
+
+def SEARCH():
+    kb = xbmc.Keyboard('default', 'heading', True)
+    kb.setDefault("")
+    kb.setHeading("Cautare")
+    kb.setHiddenInput(False)
+    kb.doModal()
+    if (kb.isConfirmed()):
+        term = kb.getText()
+        r = s.get(__base_url__ + "/search/node/" + urllib.quote(term))
+
+        print r.status_code
         
+        if r.status_code == 200:
+            page = r.content
+
+            # remove the trafic.ro script; otherwise, for some reason parsing fails in XBMC, although it works in IDLE
+            page = re.sub("<div id=\"trafic_ro\">((.|\n)*)</div>", "", page)
+
+            soup = BeautifulSoup(page)
+            movies = soup.find(attrs={"class": "search-results node-results"})
+
+            for movie in movies.findAll('div', attrs={"class": "bloc_seriale"}):
+                try:
+                    print movie.text, movie.a['href'], movie.img['src']
+                    addDir(movie.text, "/" + movie.a['href'], 2, __base_url__ + "/" + movie.img['src'])
+                except:
+                    # we will probably miss some series; to fix later
+                    pass
+                
+            xbmc.executebuiltin("Container.SetViewMode(500)")
+        else:
+            showError(__base_url__ + url, r)
+    else:
+        print "closed"
+              
+    xbmcplugin.endOfDirectory(int(sys.argv[1]), cacheToDisc = False)
+
 def CATEGORIES():
     r = s.get(__base_url__)
 
@@ -215,7 +252,7 @@ def addLink(name, url, subtitle, iconimage, action, cookies, watched):
     ok = True
     url = sys.argv[0] + "?url=" + urllib.quote_plus(url) + "&subtitle=" + subtitle + "&action=" + str(action) + "&cookies=" + cookies + "&name=" + urllib.quote_plus(name)
     print "~~~~~~~~~~~~", url
-    liz = xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
+    liz = xbmcgui.ListItem(name, iconImage = "DefaultVideo.png", thumbnailImage=iconimage)
     infolabels = {}
     infolabels["Title"] = name
     liz.setInfo(type="Video", infoLabels = infolabels)
@@ -225,7 +262,7 @@ def addLink(name, url, subtitle, iconimage, action, cookies, watched):
 def addDir(name, url, mode, iconimage):
     u = sys.argv[0] + "?url=" + urllib.quote_plus(url) + "&mode=" + str(mode) + "&name=" + urllib.quote_plus(name)
     ok = True
-    liz = xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage = iconimage)
+    liz = xbmcgui.ListItem(name, iconImage = "DefaultFolder.png", thumbnailImage = iconimage)
     liz.setInfo(type="Video", infoLabels = { "Title": name })
     ok = xbmcplugin.addDirectoryItem(handle = int(sys.argv[1]), url = u, listitem = liz, isFolder = True)
     return ok
@@ -290,6 +327,9 @@ if mode == None or url == None or len(url) < 1:
 elif mode == 0 and url == "/seriale":
     CATEGORIES()
     
+elif mode == 0 and url == "/cautare":
+    SEARCH()
+    
 elif mode == 1:
     print "" + url
     CATEGORY(url)
@@ -331,6 +371,7 @@ if action == 'play_video':
 
     while not player.isPlaying():
         time.sleep(1)
+        
 elif action == 'activare':
     ACTIVATE()
         
