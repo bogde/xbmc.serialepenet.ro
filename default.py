@@ -20,6 +20,8 @@ __code__        = __settings__.getSetting("code")
 
 def MAINMENU():
     addDir("Seriale", "/seriale", 0, "")
+    if __settings__.getSetting("last_link"):
+        addDir(__settings__.getSetting("last_title"), __settings__.getSetting("last_link"), 2, "")
     #addDir("Cautare", "/cautare", 0, "")
     #addDir("Top", "/top", 0, "")
     addLink('Activare', "/activare", "", "", "activare", "", False)
@@ -90,6 +92,12 @@ def SEASONS(url):
         page = re.sub("<div id=\"trafic_ro\">((.|\n)*)</div>", "", page)
                 
         soup = BeautifulSoup(page)
+
+        # get the title and save "last watched" setting
+        title = soup.title.text.split("serial online cu subtitrare")[0].strip()
+        __settings__.setSetting('last_link', url)
+        __settings__.setSetting('last_title', title)
+        
         movies = soup.find(attrs={"class": "menu"})
 
         for movie in movies.findAll('div', attrs={"class": "bloc_sezoane"}):
