@@ -1,4 +1,4 @@
-import urllib, re, xbmcplugin, xbmcgui, xbmcaddon, time
+import urllib, re, xbmcplugin, xbmcgui, xbmcaddon, time, os
 from bs4 import BeautifulSoup
 import requests
 import subtitles
@@ -362,10 +362,23 @@ if action == 'play_video':
     print "--- getting subtitle file"
     r = requests.get(subtitle, headers=headers)
     print "--- done"
-    text = r.content
-    print "--- converting subtitles"
-    subt = subtitles.ttml2srt(text, "test.srt")
-    print "--- done: ", subt
+    text = r.content.strip()
+    if text.startswith("<tt"):
+        print "--- converting subtitles"
+        subt = subtitles.ttml2srt(text, "test.srt")
+        print "--- done: ", subt
+    else:
+        print "--- subtitle in correct format, saving"
+        tmp_dir = xbmc.translatePath( "special://temp")
+        subs = os.path.join(tmp_dir, 'serialepenet')
+        if os.path.isdir(subs) is False:
+            os.makedirs(subs)
+        tmp_file = subs + os.sep + "test.srt"
+        print tmp_file
+        f = open(tmp_file, 'w')
+        f.write(text)
+        f.close()
+        subt = tmp_file
 
     player.setSubtitles(subt)
 
