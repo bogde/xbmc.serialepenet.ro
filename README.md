@@ -6,7 +6,9 @@ serialepenet.ro plugin for XBMC
 This plugin has been tested and works on the following setups:
 
 Windows 7 x64 with XBMC Frodo, stable
+
 Windows 7 x64 with XBMC (nightly build) 13.0-ALPHA10 Git:20131122-96714f6 (Compiled: Nov 23 2013)
+
 Raspberry Pi with RaspBMC
 
 The plugin crashes on:
